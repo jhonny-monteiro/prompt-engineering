@@ -8,7 +8,7 @@ dotenv.load_dotenv()
 client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-model = "claude-3-5-sonnet-20240620"
+model = "claude-haiku-4-5-20251001"
 
 def analyze_transactions(transactions):
     system_prompt = """
@@ -49,7 +49,6 @@ def analyze_transactions(transactions):
         message = client.messages.create(
             model=model,
             max_tokens=4000,
-            temperature=0,
             system=system_prompt,
             messages=[
                 {
@@ -98,7 +97,6 @@ def generate_report(transaction):
         message = client.messages.create(
             model=model,
             max_tokens=4000,
-            temperature=0,
             messages=[
                 {
                     "role": "user",
@@ -137,7 +135,6 @@ def generate_recommendation(report):
         message = client.messages.create(
             model=model,
             max_tokens=4000,
-            temperature=0,
             messages=[
                 {
                     "role": "user",

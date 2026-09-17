@@ -7,7 +7,7 @@ dotenv.load_dotenv()
 client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-model = "claude-3-5-sonnet-20240620"
+model = "claude-haiku-4-5-20251001"
 
 def identify_profile():
     system_prompt = f"""
@@ -22,7 +22,6 @@ def identify_profile():
     message = client.messages.create(
         model=model,
         max_tokens=2000,
-        temperature=0,
         system=system_prompt,
         messages=[
             {
