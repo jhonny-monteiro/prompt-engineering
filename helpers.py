@@ -1,14 +1,14 @@
-def carrega(nome_do_arquivo):
+def load_file(file_name):
     try:
-        with open(nome_do_arquivo, "r", encoding="utf-8") as arquivo:
-            dados = arquivo.read()
-            return dados
+        with open(file_name, "r", encoding="utf-8") as file:
+            data = file.read()
+            return data
     except IOError as e:
         print(f"Erro: {e}")
 
-def salva(nome_do_arquivo, conteudo):
+def save_file(file_name, content):
     try:
-        with open(nome_do_arquivo, "w", encoding="utf-8") as arquivo:
-            arquivo.write(conteudo)
+        with open(file_name, "w", encoding="utf-8") as file:
+            file.write(content)
     except IOError as e:
         print(f"Erro ao salvar arquivo: {e}")

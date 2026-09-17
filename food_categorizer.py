@@ -6,17 +6,16 @@ dotenv.load_dotenv()
 client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-modelo = "claude-3-5-sonnet-20240620"
-#modelo = "claude-3-haiku-20240307"
+model = "claude-3-5-sonnet-20240620"
 
-def categoriza_alimento(lista_categorias_validas,nome_do_alimento):
-    prompt_de_sistema = f"""
+def categorize_food(valid_categories, food_name):
+    system_prompt = f"""
     Você é um categorizador de alimentos.
     Você deve assumir as categorias presentes na lista abaixo.
     Você não deve responder outros objetos que não são alimentos.
 
     # Lista de Categorias Válidas
-    {lista_categorias_validas.split(",")}
+    {valid_categories.split(",")}
 
     # Formato da Saída
     Produto: Nome do Produto
@@ -26,30 +25,30 @@ def categoriza_alimento(lista_categorias_validas,nome_do_alimento):
     Produto: Maçã
     Categoria: Frutas
     """
-    prompt_de_usuario = nome_do_alimento
+    user_prompt = food_name
     message = client.messages.create(
-        model= modelo,
+        model=model,
         max_tokens=1000,
         temperature=0,
-        system= prompt_de_sistema,
+        system=system_prompt,
         messages=[
             {
                 "role": "user",
                 "content": [
                     {
                         "type": "text",
-                        "text": prompt_de_usuario
+                        "text": user_prompt
                     }
                 ]
             }
         ]
     )
-    resposta = message.content[0].text
-    return resposta
+    response = message.content[0].text
+    return response
 
-categorias_validas = input("Informe as categorias válidas, separando por vírgula: ")
-
-while True:
-    nome_do_alimento = input("Informe o nome do alimento: ")
-    texto_da_resposta = categoriza_alimento(categorias_validas,nome_do_alimento)
-    print(texto_da_resposta)
+if __name__ == "__main__":
+    valid_categories = input("Informe as categorias válidas, separando por vírgula: ")
+    while True:
+        food_name = input("Informe o nome do alimento: ")
+        response_text = categorize_food(valid_categories, food_name)
+        print(response_text)

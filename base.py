@@ -4,37 +4,37 @@ import os
 from helpers import *
 
 dotenv.load_dotenv()
-cliente = anthropic.Anthropic(
+client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-modelo = "claude-3-5-sonnet-20240620"
+model = "claude-3-5-sonnet-20240620"
 
-def funcao():
-    prompt_do_sistema = f"""
+def function():
+    system_prompt = f"""
 
     """
-    prompt_do_usuario = f"""
+    user_prompt = f"""
 
     """
     try:
-        mensagem = cliente.messages.create(
-            model=modelo,
+        message = client.messages.create(
+            model=model,
             max_tokens=4000,
             temperature=0,
-            system=prompt_do_sistema,
+            system=system_prompt,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt_do_usuario
+                            "text": user_prompt
                         }
                     ]
                 }
             ]
         )
-        resposta = mensagem.content[0].text
+        response = message.content[0].text
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:

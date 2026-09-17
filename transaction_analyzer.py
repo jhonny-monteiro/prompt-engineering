@@ -1,18 +1,18 @@
 import anthropic
 import dotenv
 import os
-from helpers import *
 import json
+from helpers import load_file, save_file
 
 dotenv.load_dotenv()
-cliente = anthropic.Anthropic(
+client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-modelo = "claude-3-5-sonnet-20240620"
+model = "claude-3-5-sonnet-20240620"
 
-def analisar_transacoes(transacoes):
-    prompt_do_sistema = """
-    Analise as transações financeiras a seguir e identifique se cada uma delas é uma "Possível Fraude" ou deve ser "Aprovada". 
+def analyze_transactions(transactions):
+    system_prompt = """
+    Analise as transações financeiras a seguir e identifique se cada uma delas é uma "Possível Fraude" ou deve ser "Aprovada".
     Adicione um atributo "Status" com um dos valores: "Possível Fraude" ou "Aprovado".
 
     Cada nova transação deve ser inserida dentro da lista do JSON.
@@ -20,10 +20,10 @@ def analisar_transacoes(transacoes):
     # Possíveis indicações de fraude
     - Transações com valores muito discrepantes
     - Transações que ocorrem em locais muito distantes um do outro
-    
+
     Adote o formato de resposta abaixo para compor sua resposta.
-        
-    # Formato Saída 
+
+    # Formato Saída
     {
         "transacoes": [
             {
@@ -37,37 +37,37 @@ def analisar_transacoes(transacoes):
             "status": ""
             },
         ]
-    } 
+    }
 
     """
-    prompt_do_usuario = f"""
-    Considere o CSV abaixo, onde cada linha é uma transação diferente: {transacoes}. 
+    user_prompt = f"""
+    Considere o CSV abaixo, onde cada linha é uma transação diferente: {transactions}.
     Sua resposta deve adotar o #Formato de Resposta (apenas um json sem outros comentários)
     """
     try:
         print('1 - Iniciou a análise de Fraude')
-        mensagem = cliente.messages.create(
-            model=modelo,
+        message = client.messages.create(
+            model=model,
             max_tokens=4000,
             temperature=0,
-            system=prompt_do_sistema,
+            system=system_prompt,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt_do_usuario
+                            "text": user_prompt
                         }
                     ]
                 }
             ]
         )
-        resposta = mensagem.content[0].text
-        json_resposta = json.loads(resposta)
-        salva('transacoes.json',resposta)
+        response = message.content[0].text
+        json_response = json.loads(response)
+        save_file('transacoes.json', response)
         print('2 - Finalizou a análise de Fraude')
-        return json_resposta
+        return json_response
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:
@@ -77,10 +77,10 @@ def analisar_transacoes(transacoes):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-def gerar_parecer(transacao):
-    prompt_do_sistema = f"""
+def generate_report(transaction):
+    system_prompt = f"""
     Para a seguinte transação, forneça um parecer, apenas se o status dela for de "Possível Fraude". Indique no parecer uma justificativa para que você identifique uma fraude.
-    Transação: {transacao}
+    Transação: {transaction}
 
     ## Formato de Resposta
     "id": "id",
@@ -95,26 +95,25 @@ def gerar_parecer(transacao):
     """
     try:
         print('3 - Iniciou a geração de parecer')
-        mensagem = cliente.messages.create(
-            model=modelo,
+        message = client.messages.create(
+            model=model,
             max_tokens=4000,
             temperature=0,
-            # system=prompt_do_sistema,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt_do_sistema
+                            "text": system_prompt
                         }
                     ]
                 }
             ]
         )
-        resposta = mensagem.content[0].text
+        response = message.content[0].text
         print('4 - Finalizou a geração de parecer')
-        return resposta
+        return response
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:
@@ -124,9 +123,9 @@ def gerar_parecer(transacao):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-def gerar_recomendacao(parecer):
-    prompt_do_sistema = f"""
-    Para a seguinte transação, forneça uma recomendação apropriada baseada no status e nos detalhes da Transação: {parecer}
+def generate_recommendation(report):
+    system_prompt = f"""
+    Para a seguinte transação, forneça uma recomendação apropriada baseada no status e nos detalhes da Transação: {report}
 
     As recomendações podem ser "Notificar Cliente", "Acionar setor Anti-Fraude" ou "Realizar Verificação Manual".
     Elas devem ser escritas no formato técnico.
@@ -135,26 +134,25 @@ def gerar_recomendacao(parecer):
     """
     try:
         print('5 - Iniciou a geração de recomendação')
-        mensagem = cliente.messages.create(
-            model=modelo,
+        message = client.messages.create(
+            model=model,
             max_tokens=4000,
             temperature=0,
-            # system=prompt_do_sistema,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt_do_sistema
+                            "text": system_prompt
                         }
                     ]
                 }
             ]
         )
-        resposta = mensagem.content[0].text
+        response = message.content[0].text
         print('6 - Finalizou a geração de recomendação')
-        return resposta
+        return response
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:
@@ -164,11 +162,15 @@ def gerar_recomendacao(parecer):
     except Exception as e:
         print(f"Ocorreu um erro inesperado: {e}")
 
-transacoes = carrega('transacoes.csv')
-transacoes_analisadas = analisar_transacoes(transacoes)
+if __name__ == "__main__":
+    transactions = load_file('transacoes.csv')
+    analyzed_transactions = analyze_transactions(transactions)
 
-for transacao in transacoes_analisadas["transacoes"]:
-    if transacao['status'] == "Possível Fraude":
-        parecer = gerar_parecer(transacao)
-        recomendacao = gerar_recomendacao(parecer)
-        salva(f'transacao-{transacao['id']}-{transacao['nome_produto']}-{transacao['status']}.txt',recomendacao)
+    for transaction in analyzed_transactions["transacoes"]:
+        if transaction['status'] == "Possível Fraude":
+            report = generate_report(transaction)
+            recommendation = generate_recommendation(report)
+            save_file(
+                f'transacao-{transaction["id"]}-{transaction["nome_produto"]}-{transaction["status"]}.txt',
+                recommendation
+            )

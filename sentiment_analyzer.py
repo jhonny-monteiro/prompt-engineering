@@ -1,16 +1,16 @@
 import anthropic
 import dotenv
 import os
-from helpers import *
+from helpers import load_file, save_file
 
 dotenv.load_dotenv()
-cliente = anthropic.Anthropic(
+client = anthropic.Anthropic(
     api_key=os.environ.get("ANTHROPIC_API_KEY"),
 )
-modelo = "claude-3-5-sonnet-20240620"
+model = "claude-3-5-sonnet-20240620"
 
-def analisador_de_sentimentos(restaurante):
-    prompt_do_sistema = f"""
+def analyze_sentiment(restaurant):
+    system_prompt = f"""
     Você é um analisador de sentimentos de avaliações de restaurantes.
     Escreva um parágrafo com até 50 palavras resumindo as avaliações e
     depois atribua qual o sentimento geral para o produto.
@@ -18,36 +18,36 @@ def analisador_de_sentimentos(restaurante):
 
     # Formato de Saída
 
-    Nome do Restaurante: {restaurante}
+    Nome do Restaurante: {restaurant}
     Resumo das Avaliações:
     Sentimento Geral: [utilize aqui apenas Positivo, Negativo ou Neutro]
     Ponto fortes: lista com três bullets
     Pontos fracos: lista com três bullets
 
     """
-    prompt_do_usuario = carrega(f'./dados/avaliacoes/avaliacoes-{restaurante}.txt')
-    print(f'Iniciou a análise do {restaurante}')
+    user_prompt = load_file(f'./dados/avaliacoes/avaliacoes-{restaurant}.txt')
+    print(f'Iniciou a análise do {restaurant}')
     try:
-        mensagem = cliente.messages.create(
-            model=modelo,
+        message = client.messages.create(
+            model=model,
             max_tokens=2000,
             temperature=0,
-            system=prompt_do_sistema,
+            system=system_prompt,
             messages=[
                 {
                     "role": "user",
                     "content": [
                         {
                             "type": "text",
-                            "text": prompt_do_usuario
+                            "text": user_prompt
                         }
                     ]
                 }
             ]
         )
-        resposta = mensagem.content[0].text
-        salva(f'./dados/avaliacoes/analise-{restaurante}.txt',resposta)
-        print(f'Finalizou a análise do {restaurante}')
+        response = message.content[0].text
+        save_file(f'./dados/avaliacoes/analise-{restaurant}.txt', response)
+        print(f'Finalizou a análise do {restaurant}')
     except anthropic.APIConnectionError as e:
         print("O servidor não pode ser acessado! Erro:", e.__cause__)
     except anthropic.RateLimitError as e:
@@ -55,9 +55,13 @@ def analisador_de_sentimentos(restaurante):
     except anthropic.APIStatusError as e:
         print(f"Um erro {e.status_code} foi recebido. Mais informações: {e.response}")
     except Exception as e:
-        print(f"Um erro insperado ocorreu: {e}")
+        print(f"Um erro inesperado ocorreu: {e}")
 
-lista_de_restaurantes = ['Restaurante de Comida Vegana', 'Restaurante de Comida Chinesa','Restaurante de Bolos e Doces']
-
-for restaurante in lista_de_restaurantes:
-    analisador_de_sentimentos(restaurante)
+if __name__ == "__main__":
+    restaurant_list = [
+        'Restaurante de Comida Vegana',
+        'Restaurante de Comida Chinesa',
+        'Restaurante de Bolos e Doces',
+    ]
+    for restaurant in restaurant_list:
+        analyze_sentiment(restaurant)
